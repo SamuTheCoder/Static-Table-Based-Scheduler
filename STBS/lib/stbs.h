@@ -3,6 +3,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include <stdint.h>
+#include "../lib/fifo.h"
 
 #define MAX_TASKS 10
 
@@ -12,6 +13,7 @@
 #define UART_HANDLER_PRIORITY 2
 
 #define THREAD_STACK_SIZE 1024
+#define TICK_SCHEDULER_SIZE 25
 
 extern K_THREAD_STACK_DEFINE(tick_handler_stack, THREAD_STACK_SIZE);
 
@@ -31,8 +33,9 @@ extern struct k_sem uart_handler_sem;
 typedef struct task_t {
     uint16_t period_ticks;            // Task execution period in ticks
     k_tid_t task_id;                      // Task identifier
-    uint32_t next_activation;         // Next activation time in ticks
+    uint16_t worst_case_execution_time;  // Task worst case execution time in ticks
     int priority;                     // Task priority
+    struct k_sem sem;                        // Task semaphore
 } task_t;
 
 
@@ -42,8 +45,7 @@ extern uint32_t num_tasks;
 extern struct k_thread tick_handler_thread;
 
 // Table with tasks for each minor cycle
-extern k_tid_t* tick_scheduler;
-
+extern struct k_sem tick_scheduler[1000];
 
 /**
  * @brief Initializes the STBS system, including creating eventual system tasks, initializing variables, etc.

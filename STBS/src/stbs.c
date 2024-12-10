@@ -12,7 +12,12 @@ void stbs_init(void){
     tick_handler_tid = k_thread_create(&tick_handler_thread, tick_handler_stack, K_THREAD_STACK_SIZEOF(tick_handler_stack),
                     tick_handler, NULL, NULL, NULL, 0, TICK_HANDLER_PRIORITY, K_NO_WAIT);
 
-    task_table[num_tasks] = (task_t){.period_ticks = 0, .task_id = tick_handler_tid, .next_activation = 0, .priority = TICK_HANDLER_PRIORITY};
+    struct k_sem tick_handler_sem;
+
+    k_sem_init(&tick_handler_sem, 0, 1);
+
+    task_table[num_tasks] = (task_t){.period_ticks = 0, .task_id = tick_handler_tid, 
+        .worst_case_execution_time = 0, .priority = TICK_HANDLER_PRIORITY, .sem = NULL};
 
     num_tasks++;
 
@@ -44,24 +49,52 @@ void stbs_init(void){
             minor_cycle = task_table[i].period_ticks;
     }
 
-    // Create scheduling table
-    tick_scheduler = (k_tid_t*)k_malloc(hyper_period/ minor_cycle * sizeof(k_tid_t));
+   /* 100ms
 
-    
+    T1 = 25ms
+    T2 = 50ms 
+    T3 = 100ms
 
+    Tick = 0 --> {T1, T2, T3}
+    Tick = 25 --> {T1}
+    Tick = 50 --> {T1, T2}
+    Tick = 75 --> {T1}
+    Tick = 100 --> {T1, T2, T3}
 
-    // Fill scheduling table
-    memset(tick_scheduler, 0, hyper_period * sizeof(k_tid_t));
-    int aux = 0;
-    for(uint16_t i = 1; i <= hyper_period / minor_cycle; i++){
+    pendind_tasks = [t1, t2, t3]
+    worst_case_idx = 0
+
+    for (tick in ticks){
+        for task in task:
+            if taks.period % tick == 0
+                pending_tasks.add(task)
+        if worst_case_idx == 0 and pending_tasks
+            pending_tasks.pop(0) # Remove first position of pending_tasks if any
+            # add tasks to table
+            worst_case_idx += worst_case_period
+
+        worst_case_idx-- # */
+
+    FIFO pending_tasks;
+    fifo_init(&pending_tasks);
+    uint16_t worst_case_idx = 0;
+
+    uint16_t aux = 0;
+    for(uint16_t i = 0; i < hyper_period; i++){
         for(int j = 0; j < num_tasks; j++){
             if(i % task_table[j].period_ticks == 0){
-                tick_scheduler[aux] = task_table[j].task_id;
+                fifo_push(&pending_tasks, task_table[j].sem);
                 aux++;
             }
         }
+        if(worst_case_idx == 0 && fifo_is_empty(&pending_tasks)){
+            struct k_sem value = *fifo_pop(&pending_tasks);
+            tick_scheduler[i] = value;
+            worst_case_idx = task_table[0].worst_case_execution_time;
+        }
+        worst_case_idx--;
     }
-    
+   
 }
 
 void stbs_add_task(k_tid_t task_id, uint32_t period_ticks, int priority){
@@ -71,7 +104,7 @@ void stbs_add_task(k_tid_t task_id, uint32_t period_ticks, int priority){
     }
     if(num_tasks == NULL)
         num_tasks = 0;
-    task_table[num_tasks] = (task_t){.period_ticks = period_ticks, .task_id = task_id, .next_activation = 0, .priority = priority};
+    task_table[num_tasks] = (task_t){.period_ticks = period_ticks, .task_id = task_id, .worst_case_execution_time = 0, .priority = priority};
     num_tasks++;
 }
 
