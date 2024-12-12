@@ -1,0 +1,11 @@
+{
+    "nrf-connect.applications": [
+        "${workspaceFolder}/STBS"
+    ],
+    "C_Cpp.errorSquiggles": "enabled",
+    "files.associations": {
+        "timing.h": "c",
+        "stbs.h": "c",
+        "kernel.h": "c"
+    }
+}

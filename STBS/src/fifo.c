@@ -25,15 +25,14 @@ bool fifo_push(FIFO *fifo, struct k_sem value) {
     return true;
 }
 
-struct k_sem* fifo_pop(FIFO *fifo) {
+void fifo_pop(FIFO *fifo, struct k_sem *value) {
     if (fifo_is_empty(fifo)) {
         printf("FIFO is empty\n");
         return NULL; // Indicate error (e.g., no element to dequeue)
     }
-    struct k_sem value = fifo->buffer[fifo->front];
+    value = &(fifo->buffer[fifo->front]);
     fifo->front = (fifo->front + 1) % FIFO_SIZE;
     fifo->count--;
-    return &value;
 }
 
 void fifo_print(FIFO *fifo) {
