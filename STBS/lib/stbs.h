@@ -3,7 +3,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include <stdint.h>
-#include "../lib/fifo.h"
 
 #define MAX_TASKS 10
 
@@ -14,6 +13,13 @@
 
 #define THREAD_STACK_SIZE 1024
 #define TICK_SCHEDULER_SIZE 25
+
+typedef struct {
+    uint8_t task_id;
+    uint16_t period_ticks;
+    uint16_t worst_case_execution_time;
+    uint8_t priority;
+} task_t;
 
 extern k_tid_t tick_handler_tid;
 extern k_tid_t btn_handler_tid;
@@ -35,7 +41,7 @@ extern uint32_t num_tasks;
 extern struct k_thread tick_handler_thread;
 
 // Table with tasks for each minor cycle
-extern task_t* tick_scheduler[100][MAX_TASKS];
+extern uint8_t tick_scheduler[100][MAX_TASKS];
 
 /**
  * @brief Initializes the STBS system, including creating eventual system tasks, initializing variables, etc.
@@ -63,7 +69,7 @@ void stbs_stop(void);
  * @param period_ticks Period of the task in ticks
  * @param priority Priority of the task
  */
-void stbs_add_task(k_tid_t task_id, uint32_t period_ticks, int priority, uint16_t worst_case_execution_time, struct k_sem *sem);
+void stbs_add_task(uint8_t task_id, uint32_t period_ticks, int priority, uint16_t worst_case_execution_time);
 
 /**
  * @brief Removes a task identified by task_id from the table

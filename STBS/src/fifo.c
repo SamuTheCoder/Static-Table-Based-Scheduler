@@ -14,12 +14,13 @@ bool fifo_is_full(FIFO *fifo) {
     return fifo->count == FIFO_SIZE;
 }
 
-bool fifo_push(FIFO *fifo, struct k_sem value) {
+bool fifo_push(FIFO *fifo, struct k_sem* value) {
     if (fifo_is_full(fifo)) {
         printf("FIFO is full\n");
         return false;
     }
-    fifo->buffer[fifo->rear] = value;
+    //Point to the same semaphore
+    fifo->buffer[fifo->rear] = *value;
     fifo->rear = (fifo->rear + 1) % FIFO_SIZE;
     fifo->count++;
     return true;

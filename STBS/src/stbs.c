@@ -19,11 +19,14 @@ uint16_t minor_cycle;
 
 task_t task_table[MAX_TASKS];
 uint32_t num_tasks;
-task_t* tick_scheduler[100][MAX_TASKS];
+uint8_t tick_scheduler[100][MAX_TASKS];
 
 void stbs_init(void){
     // Tasks: tick_handler, btn_handler, led_handler, uart_handler
     num_tasks = 0;
+
+    struct k_sem null_sem;
+    k_sem_init(&null_sem, 0, 1);
 
     // Initialize semaphores
     k_sem_init(&btn_handler_sem, 0, 1);
@@ -32,10 +35,10 @@ void stbs_init(void){
     k_sem_init(&aux_sem, 0, 1);
 
     // Add tasks to task table
-    stbs_add_task(765, 300, 1, 10, &aux_sem);
-    stbs_add_task(btn_handler_tid, 100, BTN_HANDLER_PRIORITY, 10, &btn_handler_sem);
-    stbs_add_task(led_handler_tid, 200, LED_HANDLER_PRIORITY, 10, &led_handler_sem);
-    stbs_add_task(uart_handler_tid, 200, UART_HANDLER_PRIORITY, 10, &uart_handler_sem);
+    stbs_add_task(64, 100, 1, 5);
+    stbs_add_task(btn_handler_tid, 25, BTN_HANDLER_PRIORITY, 5);
+    stbs_add_task(led_handler_tid, 50, LED_HANDLER_PRIORITY, 10);
+    stbs_add_task(uart_handler_tid, 75, UART_HANDLER_PRIORITY, 10);
     
     // Initialize tick handler task (periodic, so it needs to be added to the task table)
     //tick_handler_tid = k_thread_create(&tick_handler_thread, tick_handler_stack, K_THREAD_STACK_SIZEOF(tick_handler_stack),
@@ -86,8 +89,8 @@ void stbs_init(void){
     printk("Hyper period: %d\n", hyper_period);
     printk("Minor cycle: %d\n", minor_cycle);
 
-    FIFO *deferred_tasks = malloc(sizeof(FIFO));
-    fifo_init(deferred_tasks);
+    task_t postponed_tasks[MAX_TASKS];
+    uint8_t num_postponed_tasks = 0;
 
     
     for (uint16_t t = 0; t < hyper_period; t += minor_cycle) {
@@ -100,58 +103,66 @@ void stbs_init(void){
                 printk("Task %d selected for tick %d\n", i, t);
                 if (used_time + task_table[i].worst_case_execution_time <= minor_cycle) {
                     printk("Task %d scheduled\n", i);
-                    tick_scheduler[t / minor_cycle][i] = &task_table[i];
+                    tick_scheduler[t / minor_cycle][i] = task_table[i].task_id;
                     used_time += task_table[i].worst_case_execution_time;
                 } else {
                     printk("Task %d deferred\n", i);
-                    fifo_push(deferred_tasks, *(task_table[i].sem)); // Still need FIFO to manage deferred tasks
+                    postponed_tasks[num_postponed_tasks] = task_table[i];
+                    num_postponed_tasks++;
                 }
             }
-            else {
-                tick_scheduler[t / minor_cycle][i] = NULL;
+            else {          
+                tick_scheduler[t / minor_cycle][i] =  255;
             }
         }
 
         // Print contents of deferred tasks
-        printk("Deferred tasks: ");
-        for (int i = 0; i < deferred_tasks->count; i++) {
-            printk("%d ", deferred_tasks->buffer[i]);
-        } 
+        printk("Postponed tasks: \n");
+        for (int i = 0; i < num_postponed_tasks; i++) {
+            printk("%d \n", postponed_tasks[i].task_id);
+        }
 
         // Attempt to reschedule deferred tasks
-        FIFO *temp_queue = malloc(sizeof(FIFO));
-        fifo_init(temp_queue);
+        task_t temp_task_table[MAX_TASKS];
+        uint8_t temp_num_tasks = 0;
 
-        while (!fifo_is_empty(deferred_tasks)) {
+        
+        for(int i = 0; i < num_postponed_tasks; i++){
             printk("There are deferred tasks\n");
-            struct k_sem *deferred_task_sem;
-            fifo_pop(deferred_tasks, deferred_task_sem);
             int task_idx = -1;
 
             // Find the task corresponding to the semaphore
             for (int j = 0; j < num_tasks; j++) {
-                if (task_table[j].sem == deferred_task_sem) {
+                if (task_table[j].task_id == postponed_tasks[i].task_id) {
+                    printk("Task %d found with id %d\n", j, task_table[j].task_id);
                     task_idx = j;
                     break;
                 }
             }
 
             if (task_idx >= 0 && used_time + task_table[task_idx].worst_case_execution_time <= minor_cycle) {
-                tick_scheduler[t / minor_cycle][task_idx] = &task_table[task_idx];
+                tick_scheduler[t / minor_cycle][task_idx] = task_table[task_idx].task_id;
                 used_time += task_table[task_idx].worst_case_execution_time;
             } else {
-                fifo_push(temp_queue, *deferred_task_sem);
+                printk("Task %d deferred again\n", task_idx);
+                temp_task_table[temp_num_tasks] = task_table[task_idx];
+                temp_num_tasks++;
             }
         }
 
-        printk("Temp queue is empty: %d\n", fifo_is_empty(temp_queue));
+        //printk("Temp queue is empty: %d\n", fifo_is_empty(temp_queue));
 
         // Move remaining deferred tasks back
-        while (!fifo_is_empty(temp_queue)) {
-            struct k_sem *deferred_task_sem;
-            fifo_pop(temp_queue, deferred_task_sem);
-            fifo_push(deferred_tasks, *deferred_task_sem);
+        if(temp_num_tasks > 0){
+            for (int i = 0; i < temp_num_tasks; i++) {
+                postponed_tasks[i] = temp_task_table[i];
+            }
+            num_postponed_tasks = temp_num_tasks;
         }
+        else{
+            num_postponed_tasks = 0;
+        }
+        temp_num_tasks = 0;
     }
 
     while(1){
@@ -161,9 +172,9 @@ void stbs_init(void){
         printk("%d\n", hyper_period); //0
         for (int i = 0; i < hyper_period / minor_cycle; i++) {
             for (int j = 0; j < num_tasks; j++) {
-                if(tick_scheduler[i][j] != NULL){
-                    printk("Task at tick %d: %d \n", i, tick_scheduler[i][j]->task_id);
-                }             
+                if(tick_scheduler[i][j] < 255){
+                    printk("Task %d at tick %d\n", tick_scheduler[i][j], i);
+                }          
             }  
             k_msleep(1000);        
         }
@@ -171,13 +182,13 @@ void stbs_init(void){
    
 }
 
-void stbs_add_task(k_tid_t task_id, uint32_t period_ticks, int priority, uint16_t worst_case_execution_time, struct k_sem *sem){
+void stbs_add_task(uint8_t task_id, uint32_t period_ticks, int priority, uint16_t worst_case_execution_time){
     if(num_tasks >= MAX_TASKS){
         printk("Error: Maximum number of tasks reached\n");
         return;
     }
     task_table[num_tasks] = (task_t){.period_ticks = period_ticks, .task_id = task_id, 
-        .worst_case_execution_time = worst_case_execution_time, .priority = priority, .sem = sem};
+        .worst_case_execution_time = worst_case_execution_time, .priority = priority};
     num_tasks++;
 }
 
