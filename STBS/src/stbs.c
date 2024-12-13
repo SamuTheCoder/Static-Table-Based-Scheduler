@@ -12,6 +12,7 @@ struct k_thread tick_handler_thread;
 struct k_sem btn_handler_sem;
 struct k_sem led_handler_sem;
 struct k_sem uart_handler_sem;
+struct k_sem aux_sem;
 
 uint16_t hyper_period;
 uint16_t minor_cycle;
@@ -28,8 +29,10 @@ void stbs_init(void){
     k_sem_init(&btn_handler_sem, 0, 1);
     k_sem_init(&led_handler_sem, 0, 1);
     k_sem_init(&uart_handler_sem, 0, 1);
+    k_sem_init(&aux_sem, 0, 1);
 
     // Add tasks to task table
+    stbs_add_task(765, 300, 1, 10, &aux_sem);
     stbs_add_task(btn_handler_tid, 100, BTN_HANDLER_PRIORITY, 10, &btn_handler_sem);
     stbs_add_task(led_handler_tid, 200, LED_HANDLER_PRIORITY, 10, &led_handler_sem);
     stbs_add_task(uart_handler_tid, 200, UART_HANDLER_PRIORITY, 10, &uart_handler_sem);
@@ -96,7 +99,7 @@ void stbs_init(void){
             if (t % task_table[i].period_ticks == 0) {
                 printk("Task %d selected for tick %d\n", i, t);
                 if (used_time + task_table[i].worst_case_execution_time <= minor_cycle) {
-                    printk("yee\n");
+                    printk("Task %d scheduled\n", i);
                     tick_scheduler[t / minor_cycle][i] = &task_table[i];
                     used_time += task_table[i].worst_case_execution_time;
                 } else {
@@ -104,11 +107,13 @@ void stbs_init(void){
                     fifo_push(deferred_tasks, *(task_table[i].sem)); // Still need FIFO to manage deferred tasks
                 }
             }
+            else {
+                tick_scheduler[t / minor_cycle][i] = NULL;
+            }
         }
 
         // Print contents of deferred tasks
         printk("Deferred tasks: ");
-        printk("Count: %d\n", deferred_tasks->count);
         for (int i = 0; i < deferred_tasks->count; i++) {
             printk("%d ", deferred_tasks->buffer[i]);
         } 
@@ -116,8 +121,6 @@ void stbs_init(void){
         // Attempt to reschedule deferred tasks
         FIFO *temp_queue = malloc(sizeof(FIFO));
         fifo_init(temp_queue);
-
-        printk("Deferred tasks is empty: %d\n", fifo_is_empty(deferred_tasks));
 
         while (!fifo_is_empty(deferred_tasks)) {
             printk("There are deferred tasks\n");
@@ -153,19 +156,18 @@ void stbs_init(void){
 
     while(1){
         //Print scheduling table for debugging
-        for (int i = 0; i < hyper_period / minor_cycle; i++) {
-            for (int j = 0; j < num_tasks; j++) {
-                printk("Task %d at tick %d: %d ", j, i, tick_scheduler[i][j]->task_id);
-            }
-            printk("\n");
-        }
-        printk("aaagsgfdhfd\n");
         printk("%d\n", hyper_period/minor_cycle); //0
         printk("%d\n", minor_cycle); //100
         printk("%d\n", hyper_period); //0
-        k_msleep(1000);
+        for (int i = 0; i < hyper_period / minor_cycle; i++) {
+            for (int j = 0; j < num_tasks; j++) {
+                if(tick_scheduler[i][j] != NULL){
+                    printk("Task at tick %d: %d \n", i, tick_scheduler[i][j]->task_id);
+                }             
+            }  
+            k_msleep(1000);        
+        }
     }
-    
    
 }
 

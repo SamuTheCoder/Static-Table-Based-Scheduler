@@ -10,7 +10,6 @@
 int main(void) {
 
     k_msleep(3000);
-    printk("tjetje\n");
     stbs_init();
     
 
