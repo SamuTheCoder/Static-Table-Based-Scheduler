@@ -4,9 +4,9 @@
 #include "../lib/tasks.h"
 
 #define STACK_SIZE 1024
-#define thread_A_prio 2
-#define thread_B_prio 2
-#define thread_C_prio 2
+#define thread_A_prio 1
+#define thread_B_prio 1
+#define thread_C_prio 1
 #define TICK_HANDLER_PRIORITY 2
 #define thread_A_period 3000
 
@@ -46,8 +46,8 @@ int main(void) {
 
 
     stbs_add_task(PRINT_RTDB_ID, 1000, 15);
-    stbs_add_task(BTN_HANDLER_ID, 100, 5);
-    stbs_add_task(LED_HANDLER_ID, 50, 5);
+    stbs_add_task(BTN_HANDLER_ID, 200, 5);
+    stbs_add_task(LED_HANDLER_ID, 100, 5);
     stbs_init();
 
     k_sem_init(&btn_sem, 0, 1);
@@ -58,13 +58,16 @@ int main(void) {
     k_sem_take(&led_sem, K_NO_WAIT);
     k_sem_take(&print_rtdb_sem, K_NO_WAIT);
 
+    timing_init();
+    timing_start();
+
     /* Start threads */
     thread_A_tid = k_thread_create(&thread_A_data, thread_A_stack, STACK_SIZE, thread_A_code, NULL, NULL, NULL, thread_A_prio, 0, K_NO_WAIT);
     thread_B_tid = k_thread_create(&thread_B_data, thread_B_stack, STACK_SIZE, thread_B_code, NULL, NULL, NULL, thread_B_prio, 0, K_NO_WAIT);
     thread_C_tid = k_thread_create(&thread_C_data, thread_C_stack, STACK_SIZE, thread_C_code, NULL, NULL, NULL, thread_C_prio, 0, K_NO_WAIT);
     tick_handler_tid = k_thread_create(&tick_handler_thread, tick_handler_stack, STACK_SIZE, tick_thread_code, NULL, NULL, NULL, TICK_HANDLER_PRIORITY, 0, K_NO_WAIT);
 
-
+    return;
 } 
 
 /* Thread code implementation */
@@ -225,6 +228,7 @@ void tick_thread_code(void *argA , void *argB, void *argC)
 
         total_cycles = timing_cycles_get(&start_time, &end_time);
         total_ns = timing_cycles_to_ns(total_cycles);
+        //printk("Tick handler took %lld (ns) to execute\n", total_ns);
        
         /* Wait for next release instant */ 
         fin_time = k_uptime_get();

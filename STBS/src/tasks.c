@@ -76,7 +76,7 @@ int initialize_buttons()
 
 int led_handler()
 {
-    printk("LED goes on\n");
+    printk("LED goes on theee\n");
     rtdb.n_execs_led_handler++;
     //LED 1
     gpio_pin_set_dt(&led_1, rtdb.btn_value_0);

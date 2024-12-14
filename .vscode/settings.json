@@ -6,6 +6,7 @@
     "files.associations": {
         "timing.h": "c",
         "stbs.h": "c",
-        "kernel.h": "c"
+        "kernel.h": "c",
+        "compare": "c"
     }
 }
