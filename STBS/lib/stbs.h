@@ -5,40 +5,20 @@
 #include <stdint.h>
 
 #define MAX_TASKS 10
-
-#define TICK_HANDLER_PRIORITY 1
-#define BTN_HANDLER_PRIORITY 2
-#define LED_HANDLER_PRIORITY 2
-#define UART_HANDLER_PRIORITY 2
-
-#define THREAD_STACK_SIZE 1024
 #define TICK_SCHEDULER_SIZE 25
 
 typedef struct {
     uint8_t task_id;
     uint16_t period_ticks;
     uint16_t worst_case_execution_time;
-    uint8_t priority;
 } task_t;
-
-extern k_tid_t tick_handler_tid;
-extern k_tid_t btn_handler_tid;
-extern k_tid_t led_handler_tid;
-extern k_tid_t uart_handler_tid;
 
 extern uint16_t hyper_period;
 extern uint16_t minor_cycle;
-
-// Semaphores for each task
-extern struct k_sem btn_handler_sem;
-extern struct k_sem led_handler_sem;
-extern struct k_sem uart_handler_sem;
-
+extern uint16_t num_ticks;
 
 extern task_t task_table[MAX_TASKS];
 extern uint32_t num_tasks;
-
-extern struct k_thread tick_handler_thread;
 
 // Table with tasks for each minor cycle
 extern uint8_t tick_scheduler[100][MAX_TASKS];
@@ -69,7 +49,7 @@ void stbs_stop(void);
  * @param period_ticks Period of the task in ticks
  * @param priority Priority of the task
  */
-void stbs_add_task(uint8_t task_id, uint32_t period_ticks, int priority, uint16_t worst_case_execution_time);
+void stbs_add_task(uint8_t task_id, uint32_t period_ticks, uint16_t worst_case_execution_time);
 
 /**
  * @brief Removes a task identified by task_id from the table
@@ -83,12 +63,6 @@ void stbs_remove_task(int task_id);
  * 
  */
 void stbs_wait_for_next_period(void);
-
-/**
- * @brief Handler for the system tick
- * 
- */
-void tick_handler(void* arg1, void* arg2, void* arg3);
 
 /**
  * @brief Calculates the least common multiple of two numbers

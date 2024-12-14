@@ -5,6 +5,8 @@
 #include <zephyr/drivers/gpio.h>            /* for GPIO access */
 #include <zephyr/sys/printk.h>      /* for printk()*/
 #include <zephyr/devicetree.h>      /* for devicetree access */
+#include "./stbs.h"
+
 
 #define SW0_NODE DT_ALIAS(sw0)
 #define SW1_NODE DT_ALIAS(sw1)
@@ -16,11 +18,23 @@
 #define LED2_NODE DT_ALIAS(led2)
 #define LED3_NODE DT_ALIAS(led3)
 
+#define LED_HANDLER_ID 1
+#define BTN_HANDLER_ID 2
+#define PRINT_RTDB_ID 3
+
+#define LED_HANDLER_PRIORITY 2
+#define BTN_HANDLER_PRIORITY 2
+#define PRINT_RTDB_PRIORITY 2
+
+
 typedef struct {
     bool btn_value_0;
     bool btn_value_1;
     bool btn_value_2;
     bool btn_value_3;
+    int n_execs_btn_handler;
+    int n_execs_led_handler;
+    int n_execs_print_rtdb;
 } rtdb_t;
 
 extern rtdb_t rtdb;
@@ -35,6 +49,10 @@ static const struct gpio_dt_spec led_2 = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
 static const struct gpio_dt_spec led_3 = GPIO_DT_SPEC_GET(LED2_NODE, gpios);
 static const struct gpio_dt_spec led_4 = GPIO_DT_SPEC_GET(LED3_NODE, gpios);
 
+extern struct k_sem btn_sem;
+extern struct k_sem led_sem;
+extern struct k_sem print_rtdb_sem;
+
 int btn_handler();
 
 int initialize_buttons();
@@ -42,3 +60,9 @@ int initialize_buttons();
 int led_handler();
 
 int initialize_leds();
+
+void print_rtdb();
+
+void tick_handler();
+
+void init_semaphores();

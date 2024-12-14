@@ -1,9 +1,11 @@
 #include "../lib/tasks.h"
 
-rtdb_t rtdb = {1, 1, 1, 1};
+rtdb_t rtdb = {1, 1, 1, 1, 0, 0};
 
 int btn_handler()
 {
+    printk("Button handler goes on\n");
+    rtdb.n_execs_btn_handler++;
     //Button 1
     rtdb.btn_value_0 = gpio_pin_get_dt(&button_1);
 
@@ -74,25 +76,19 @@ int initialize_buttons()
 
 int led_handler()
 {
+    printk("LED goes on\n");
+    rtdb.n_execs_led_handler++;
     //LED 1
     gpio_pin_set_dt(&led_1, rtdb.btn_value_0);
-
-    k_msleep(100);
 
     //LED 2
     gpio_pin_set_dt(&led_2, rtdb.btn_value_1);
 
-    k_msleep(20);
-
     //LED 3
     gpio_pin_set_dt(&led_3, rtdb.btn_value_2);
 
-    k_msleep(20);
-
     //LED 4
     gpio_pin_set_dt(&led_4, rtdb.btn_value_3);
-
-    k_msleep(20);
 
     return 0;
 }
@@ -106,7 +102,7 @@ int initialize_leds(){
         return -1;
     }
 
-    ret = gpio_pin_configure_dt(&led_1, GPIO_OUTPUT_ACTIVE);
+    ret = gpio_pin_configure_dt(&led_1, GPIO_OUTPUT_INACTIVE);
     if (ret < 0) {
         return -1;
     }
@@ -117,7 +113,7 @@ int initialize_leds(){
         return -1;
     }
 
-    ret = gpio_pin_configure_dt(&led_2, GPIO_OUTPUT_ACTIVE);
+    ret = gpio_pin_configure_dt(&led_2, GPIO_OUTPUT_INACTIVE);
     if (ret < 0) {
         return -1;
     }
@@ -128,7 +124,7 @@ int initialize_leds(){
         return -1;
     }
 
-    ret = gpio_pin_configure_dt(&led_3, GPIO_OUTPUT_ACTIVE);
+    ret = gpio_pin_configure_dt(&led_3, GPIO_OUTPUT_INACTIVE);
     if (ret < 0) {
         return -1;
     }
@@ -139,7 +135,7 @@ int initialize_leds(){
         return -1;
     }
 
-    ret = gpio_pin_configure_dt(&led_4, GPIO_OUTPUT_ACTIVE);
+    ret = gpio_pin_configure_dt(&led_4, GPIO_OUTPUT_INACTIVE);
     if (ret < 0) {
         return -1;
     }
@@ -147,3 +143,13 @@ int initialize_leds(){
     return 0;
 
 }
+
+void print_rtdb()
+{
+    rtdb.n_execs_print_rtdb++;
+    printk("Button 1: %d\n Button 2: %d\n Button 3: %d\n Button 4: %d\n Button handler executions: %d\n LED handler executions: %d\n Print RTDB executions: %d\n", 
+            rtdb.btn_value_0, rtdb.btn_value_1, rtdb.btn_value_2, rtdb.btn_value_3, 
+            rtdb.n_execs_btn_handler, rtdb.n_execs_led_handler, rtdb.n_execs_print_rtdb
+    );
+}
+
