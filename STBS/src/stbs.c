@@ -39,13 +39,13 @@ void stbs_init(void){
     }
 
     // Calculate hyper-period
-    uint16_t hyper_period = 1;
+    hyper_period = 1;
     for (uint16_t i = 0; i < num_tasks; i++) {
         hyper_period = lcm(hyper_period, task_table[i].period_ticks);
     }
 
     // Calculate minor cycle
-    uint32_t minor_cycle = task_table[0].period_ticks;
+    minor_cycle = task_table[0].period_ticks;
     for (uint32_t i = 1; i < num_tasks; i++) {
         minor_cycle = gcd(minor_cycle, task_table[i].period_ticks);
     }
@@ -171,4 +171,8 @@ uint16_t gcd(uint16_t a, uint16_t b){
     if(b == 0)
         return a;
     return gcd(b, a % b);
+}
+
+uint16_t get_minor_cycle(){
+    return minor_cycle;
 }

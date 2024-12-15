@@ -53,6 +53,8 @@ extern struct k_sem btn_sem;
 extern struct k_sem led_sem;
 extern struct k_sem print_rtdb_sem;
 
+extern uint16_t tick;
+
 int btn_handler();
 
 int initialize_buttons();

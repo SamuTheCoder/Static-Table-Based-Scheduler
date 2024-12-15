@@ -74,6 +74,11 @@ uint16_t lcm(uint16_t a, uint16_t b);
  */
 uint16_t gcd(uint16_t a, uint16_t b);
 
+/**
+ * @brief Get the current minor cycle
+ */
+uint16_t get_minor_cycle(void);
+
 
 
 

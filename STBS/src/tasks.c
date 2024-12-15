@@ -1,24 +1,31 @@
 #include "../lib/tasks.h"
 
 rtdb_t rtdb = {1, 1, 1, 1, 0, 0};
+uint16_t tick;
 
 int btn_handler()
 {
-    printk("Button handler goes on\n");
+    //printk("Button handler goes on\n");
     rtdb.n_execs_btn_handler++;
     //Button 1
-    rtdb.btn_value_0 = gpio_pin_get_dt(&button_1);
+    if(gpio_pin_get_dt(&button_1)){
+        rtdb.btn_value_0 = !rtdb.btn_value_0;
+    }
 
     //Button 2
-    rtdb.btn_value_1 = gpio_pin_get_dt(&button_2);
+    if(gpio_pin_get_dt(&button_2)){
+        rtdb.btn_value_1 = !rtdb.btn_value_1;
+    }
 
     //Button 3
-    rtdb.btn_value_2 = gpio_pin_get_dt(&button_3);
+    if(gpio_pin_get_dt(&button_3)){
+        rtdb.btn_value_2 = !rtdb.btn_value_2;
+    }
 
     //Button 4
-    rtdb.btn_value_3 = gpio_pin_get_dt(&button_4);
-    
-    
+    if(gpio_pin_get_dt(&button_4)){
+        rtdb.btn_value_3 = !rtdb.btn_value_3;
+    }
 
     return 0;
 }
@@ -76,7 +83,7 @@ int initialize_buttons()
 
 int led_handler()
 {
-    printk("LED goes on theee\n");
+    //printk("LED goes on\n");
     rtdb.n_execs_led_handler++;
     //LED 1
     gpio_pin_set_dt(&led_1, rtdb.btn_value_0);
@@ -146,10 +153,11 @@ int initialize_leds(){
 
 void print_rtdb()
 {
-    rtdb.n_execs_print_rtdb++;
-    printk("Button 1: %d\n Button 2: %d\n Button 3: %d\n Button 4: %d\n Button handler executions: %d\n LED handler executions: %d\n Print RTDB executions: %d\n", 
+    printk("Button 1: %d\n Button 2: %d\n Button 3: %d\n Button 4: %d\n Button handler executions: %d\n LED handler executions: %d\n", 
             rtdb.btn_value_0, rtdb.btn_value_1, rtdb.btn_value_2, rtdb.btn_value_3, 
-            rtdb.n_execs_btn_handler, rtdb.n_execs_led_handler, rtdb.n_execs_print_rtdb
+            rtdb.n_execs_btn_handler, rtdb.n_execs_led_handler
     );
+    rtdb.n_execs_btn_handler = 0;
+    rtdb.n_execs_led_handler = 0;
 }
 
