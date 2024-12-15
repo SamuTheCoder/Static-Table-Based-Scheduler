@@ -64,7 +64,3 @@ int led_handler();
 int initialize_leds();
 
 void print_rtdb();
-
-void tick_handler();
-
-void init_semaphores();

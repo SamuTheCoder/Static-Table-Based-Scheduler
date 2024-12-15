@@ -2,16 +2,23 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
+#include <zephyr/timing/timing.h>
 #include <stdint.h>
 
 #define MAX_TASKS 10
 #define TICK_SCHEDULER_SIZE 25
+#define TICK_HANDLER_PRIORITY 2
 
 typedef struct {
     uint8_t task_id;
     uint16_t period_ticks;
     uint16_t worst_case_execution_time;
 } task_t;
+
+typedef struct {
+    struct k_sem* semaphores[MAX_TASKS];
+    uint8_t task_ids[MAX_TASKS];
+} tick_manager_t;
 
 extern uint16_t hyper_period;
 extern uint16_t minor_cycle;
@@ -22,6 +29,12 @@ extern uint32_t num_tasks;
 
 // Table with tasks for each minor cycle
 extern uint8_t tick_scheduler[100][MAX_TASKS];
+
+extern tick_manager_t tick_manager;
+
+extern struct k_thread tick_handler_thread;
+
+extern k_tid_t tick_handler_tid;
 
 /**
  * @brief Initializes the STBS system, including creating eventual system tasks, initializing variables, etc.
@@ -48,21 +61,9 @@ void stbs_stop(void);
  * @param task_id Identifier of the task
  * @param period_ticks Period of the task in ticks
  * @param priority Priority of the task
+ * @param semaphore Semaphore to be given when the task is ready to run
  */
-void stbs_add_task(uint8_t task_id, uint32_t period_ticks, uint16_t worst_case_execution_time);
-
-/**
- * @brief Removes a task identified by task_id from the table
- * 
- * @param task_id Identifier of the task
- */
-void stbs_remove_task(int task_id);
-
-/**
- * @brief Used inside a task body, terminates a task’s job and makes the task wait for its next activation, triggered by the STBS scheduler
- * 
- */
-void stbs_wait_for_next_period(void);
+void stbs_add_task(uint8_t task_id, uint32_t period_ticks, uint16_t worst_case_execution_time, struct k_sem* semaphore);
 
 /**
  * @brief Calculates the least common multiple of two numbers
@@ -75,9 +76,15 @@ uint16_t lcm(uint16_t a, uint16_t b);
 uint16_t gcd(uint16_t a, uint16_t b);
 
 /**
- * @brief Get the current minor cycle
+ * @brief Task code for the tick handler
  */
-uint16_t get_minor_cycle(void);
+void tick_handler(void);
+
+/**
+ * @brief Task code for the tick handler
+ */
+void tick_handler_code(void *argA, void *argB, void *argC);
+
 
 
 
