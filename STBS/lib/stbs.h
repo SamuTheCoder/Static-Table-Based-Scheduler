@@ -36,6 +36,8 @@ extern struct k_thread tick_handler_thread;
 
 extern k_tid_t tick_handler_tid;
 
+extern struct k_sem tick_handler_sem;
+
 /**
  * @brief Initializes the STBS system, including creating eventual system tasks, initializing variables, etc.
  * 
@@ -66,14 +68,10 @@ void stbs_stop(void);
 void stbs_add_task(uint8_t task_id, uint32_t period_ticks, uint16_t worst_case_execution_time, struct k_sem* semaphore);
 
 /**
- * @brief Calculates the least common multiple of two numbers
+ * @brief Function to create the tick scheduler
  */
-uint16_t lcm(uint16_t a, uint16_t b);
+void stbs_create_tick_scheduler(void);
 
-/**
- * @brief Calculates the greatest common divisor of two numbers
- */
-uint16_t gcd(uint16_t a, uint16_t b);
 
 /**
  * @brief Task code for the tick handler
@@ -84,6 +82,17 @@ void tick_handler(void);
  * @brief Task code for the tick handler
  */
 void tick_handler_code(void *argA, void *argB, void *argC);
+
+
+/**
+ * @brief Calculates the least common multiple of two numbers
+ */
+uint16_t lcm(uint16_t a, uint16_t b);
+
+/**
+ * @brief Calculates the greatest common divisor of two numbers
+ */
+uint16_t gcd(uint16_t a, uint16_t b);
 
 
 
