@@ -1,6 +1,6 @@
-#include <zephyr/kernel.h>          /* for kernel functions*/
-#include <zephyr/sys/printk.h>      /* for printk()*/
-#include <zephyr/timing/timing.h>   /* for timing services */
+#include <zephyr/kernel.h>       
+#include <zephyr/sys/printk.h>     
+#include <zephyr/timing/timing.h>   
 #include "../lib/tasks.h"
 
 #define STACK_SIZE 1024
@@ -20,9 +20,6 @@ struct k_thread rtdb_data;
 void led_thread_code(void *argA, void *argB, void *argC);
 void btn_thread_code(void *argA, void *argB, void *argC);
 void rtdb_thread_code(void *argA , void *argB, void *argC);
-void tick_handler();
-void tick_thread_code(void *argA , void *argB, void *argC);
-
 
 k_tid_t led_tid;
 k_tid_t btn_tid;
@@ -33,7 +30,6 @@ struct k_sem btn_sem;
 struct k_sem led_sem;
 struct k_sem print_rtdb_sem;
 
-/* Main function */
 int main(void) {
 
     k_msleep(3000);
@@ -56,15 +52,13 @@ int main(void) {
     timing_init();
     timing_start();
 
-    /* Start threads */
     led_tid = k_thread_create(&led_data, led_stack, STACK_SIZE, led_thread_code, NULL, NULL, NULL, thread_A_prio, 0, K_NO_WAIT);
     btn_tid = k_thread_create(&btn_data, btn_stack, STACK_SIZE, btn_thread_code, NULL, NULL, NULL, thread_B_prio, 0, K_NO_WAIT);
     rtdb_tid = k_thread_create(&rtdb_data, rtdb_stack, STACK_SIZE, rtdb_thread_code, NULL, NULL, NULL, thread_C_prio, 0, K_NO_WAIT);
 
-    return;
+    return 0;
 } 
 
-/* Thread code implementation */
 void led_thread_code(void *argA , void *argB, void *argC)
 { 
     

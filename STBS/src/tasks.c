@@ -1,7 +1,6 @@
 #include "../lib/tasks.h"
 
 rtdb_t rtdb = {1, 1, 1, 1, 0, 0};
-uint16_t tick;
 
 int btn_handler()
 {

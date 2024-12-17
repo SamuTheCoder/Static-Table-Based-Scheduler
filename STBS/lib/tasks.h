@@ -1,13 +1,18 @@
+/**
+ * @file tasks.h
+ * @brief Header file for the use case tasks implemented
+ */
+
 #pragma once
 
-#include <zephyr/kernel.h>         /* for kernel services */
-#include <zephyr/device.h>          /* for device drivers */
-#include <zephyr/drivers/gpio.h>            /* for GPIO access */
-#include <zephyr/sys/printk.h>      /* for printk()*/
-#include <zephyr/devicetree.h>      /* for devicetree access */
+#include <zephyr/kernel.h>        
+#include <zephyr/device.h>          
+#include <zephyr/drivers/gpio.h>           
+#include <zephyr/sys/printk.h>      
+#include <zephyr/devicetree.h>      
 #include "./stbs.h"
 
-
+// Define the nodes for the buttons and LEDs
 #define SW0_NODE DT_ALIAS(sw0)
 #define SW1_NODE DT_ALIAS(sw1)
 #define SW2_NODE DT_ALIAS(sw2)
@@ -53,14 +58,27 @@ extern struct k_sem btn_sem;
 extern struct k_sem led_sem;
 extern struct k_sem print_rtdb_sem;
 
-extern uint16_t tick;
-
+/**
+ * @brief Handles button events
+ */
 int btn_handler();
 
+/**
+ * @brief Initializes buttons
+ */
 int initialize_buttons();
 
+/**
+ * @brief Handles LED events
+ */
 int led_handler();
 
+/**
+ * @brief Initializes LEDs
+ */
 int initialize_leds();
 
+/**
+ * @brief Prints the RTDB values
+ */
 void print_rtdb();

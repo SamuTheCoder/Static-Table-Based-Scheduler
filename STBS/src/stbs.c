@@ -22,7 +22,6 @@ K_THREAD_STACK_DEFINE(tick_handler_stack, 1024);
 
 void tick_handler()
 {
-    //printk("Tick\n");
     //At each tick, check what tasks are ready to run
     for(int i = 0; i < num_tasks; i++){
         if(tick_scheduler[tick_count][i] == tick_manager.task_ids[0]){
@@ -62,7 +61,6 @@ void tick_handler()
     }
 }
 
-/* Thread code implementation */
 void tick_thread_code(void *argA , void *argB, void *argC)
 {
     /* Timing variables to control task periodicity */
@@ -109,24 +107,7 @@ void tick_thread_code(void *argA , void *argB, void *argC)
 }
 
 void stbs_init(void){
-    // Tasks: tick_handler, btn_handler, led_handler, uart_handler
-
     k_sem_init(&tick_handler_sem, 0, 1);
-
-    // Algorithm for creating static scheduling table
-    /* TIMELINE SCHEDULLING ACCORDING TO BUTTAZZO:
-
-	- Hyperperiod. It is the minimum interval of time after which the schedule repeats
-	itself. If H is the length of such an interval, then the schedule in [0, H] is the
-	same as that in [kK, (k + 1)K] for any integer k > 0. For a set of periodic
-	tasks synchronously activated at time t = 0, the hyperperiod is given by the least
-	common multiple of the periods:
-
-	- Calculate LEast common multiplier (Major Cycle)
-
-	- Smallest task's period (minor cycle)
-
-	Task with smallest period needs to be executed every minor cycle, the next tasks every ncycles, BUT TASKS EXECUTING IN A MINOR CYCLE CAN'T BE BIGGER THAN IT */
     
     // Sort tasks by period
     for (uint32_t i = 0; i < num_tasks - 1; i++) {
@@ -150,29 +131,13 @@ void stbs_init(void){
     for (uint32_t i = 1; i < num_tasks; i++) {
         minor_cycle = gcd(minor_cycle, task_table[i].period_ticks);
     }
+
     printk("Hyper period: %d\n", hyper_period);
     printk("Minor cycle: %d\n", minor_cycle);
 
     num_ticks = hyper_period / minor_cycle;
 
     tick_handler_tid = k_thread_create(&tick_handler_thread, tick_handler_stack, 1024, tick_thread_code, NULL, NULL, NULL, TICK_HANDLER_PRIORITY, 0, K_NO_WAIT);
-    /*
-    while(1){
-        //Print scheduling table for debugging
-        printk("%d\n", hyper_period/minor_cycle); //0
-        printk("%d\n", minor_cycle); //100
-        printk("%d\n", hyper_period); //0
-        for (int i = 0; i < hyper_period / minor_cycle; i++) {
-            for (int j = 0; j < num_tasks; j++) {
-                if(tick_scheduler[i][j] < 255){
-                    printk("Task %d at tick %d\n", tick_scheduler[i][j], i);
-                }          
-            }  
-            k_msleep(1000);        
-        }
-    }
-    */
-   
 }
 
 void stbs_add_task(uint8_t task_id, uint32_t period_ticks, uint16_t worst_case_execution_time, struct k_sem* semaphore){
@@ -284,10 +249,6 @@ void stbs_stop(void){
 }
 
 uint16_t lcm(uint16_t a, uint16_t b){
-    //printk("a and b: %d %d\n", a, b);
-    //printk("a*b: %d\n", a*b);
-    //printk("gcd: %d\n", gcd(a, b));
-    //printk("Res of lcm: %d\n", (a * b) / gcd(a, b));
     return (a * b) / gcd(a, b);
 }
 

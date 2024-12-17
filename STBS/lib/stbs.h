@@ -1,3 +1,7 @@
+/**
+ * @file stbs.h
+ * @brief Header file for the Static Table Based Scheduler (STBS) library
+ */
 #pragma once
 
 #include <zephyr/kernel.h>
@@ -9,18 +13,23 @@
 #define TICK_SCHEDULER_SIZE 25
 #define TICK_HANDLER_PRIORITY 2
 
+// Task structure
 typedef struct {
     uint8_t task_id;
     uint16_t period_ticks;
     uint16_t worst_case_execution_time;
 } task_t;
 
+
+// Tick manager for the tick handler
 typedef struct {
     struct k_sem* semaphores[MAX_TASKS];
     uint8_t task_ids[MAX_TASKS];
 } tick_manager_t;
 
+//Also called major cycle
 extern uint16_t hyper_period;
+//Also called tick size
 extern uint16_t minor_cycle;
 extern uint16_t num_ticks;
 
